@@ -5,8 +5,8 @@ ti0 = time.time()
 ##from datetime import datetime
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-
+#import matplotlib.pyplot as plt
+import altair as alt
 #---------------------------------------------------------
 import __Remodelaciones as Remo
 import __Hospitales as Hosp
@@ -40,32 +40,60 @@ def aver_tail(list_nums, perc=0.7):  #(list with numbers to calc average; perc: 
         return int(np.average(list_nums)), [list_nums]  #last: for simplifying      
 
 def aver_chart(item00, pr_aver, lis_char):    # ( item name, average pre-calculated, list:[[extreme numbers],[averaging numbers]] or [[averaging numbers]] )
-    fig, ax = plt.subplots(figsize=(5, 1.7))
+    #fig, ax = plt.subplots(figsize=(5, 1.7))
     #horizontal:
-    plt.axhline(0, color="lightgrey", linewidth=0.6, zorder=0)
+    #plt.axhline(0, color="lightgrey", linewidth=0.6, zorder=0)
     #promedio:
-    plt.scatter(pr_aver, 0, s=100, color="limegreen", zorder=3, marker='|', label = 'promedio')
+    #plt.scatter(pr_aver, 0, s=100, color="limegreen", zorder=3, marker='|', label = 'promedio')
 
-    if len(lis_char)==2:  #[[],[]]
+    #if len(lis_char)==2:  #[[],[]]
         #precios para promedio:
-        plt.scatter(lis_char[1], [0]*len(lis_char[1]), s=10, color="mediumslateblue", zorder=3)
+        #plt.scatter(lis_char[1], [0]*len(lis_char[1]), s=10, color="mediumslateblue", zorder=3)
         #extremos no considerados:
-        plt.scatter(lis_char[0], [0]*len(lis_char[0]), color="red", s=10, label="no incluidos", zorder=3)
+        #plt.scatter(lis_char[0], [0]*len(lis_char[0]), color="red", s=10, label="no incluidos", zorder=3)
 
-    elif len(lis_char)==1:  #[[]]
+    #elif len(lis_char)==1:  #[[]]
         #precios para promedio:
-        plt.scatter(lis_char[0], [0]*len(lis_char[0]), s=10, color="mediumslateblue", zorder=3)    
+        #plt.scatter(lis_char[0], [0]*len(lis_char[0]), s=10, color="mediumslateblue", zorder=3)    
 
     # Hide y-axis
-    plt.yticks([])
-    plt.xticks(fontsize=7)
-    plt.title(f"Precios: {item00}", loc='left', fontsize=9)
+    #plt.yticks([])
+    #plt.xticks(fontsize=7)
+    #plt.title(f"Precios: {item00}", loc='left', fontsize=9)
     # Adjust plot area: (left, bottom, right, top)
-    plt.subplots_adjust(left=0.1, right=0.95, top=0.8, bottom=0.3)
-    plt.legend(fontsize=6)
+    #plt.subplots_adjust(left=0.1, right=0.95, top=0.8, bottom=0.3)
+    #plt.legend(fontsize=6)
 
-    st.pyplot(fig, use_container_width=False)
-    
+    #st.pyplot(fig, use_container_width=False)
+
+    #st chart:    
+    lis_char02 = [(x,'nums') for x in lis_char[1]]  #nums para promediar
+    for y in lis_char[0]:
+        lis_char02.append((y,'extr')) #nums extremos
+    lis_char02.append((pr_aver,'prom')) #num promedio
+        
+    lis_char02_df = pd.DataFrame(lis_char02,columns=['Precio','cat'])
+
+    clrs_data = (alt.when(alt.datum.cat == 'nums')
+        .then(alt.value('#afd1e7'))      
+        .when(alt.datum.cat == 'extr')
+        .then(alt.value('#fc9e80'))     
+        .otherwise(alt.value('green')))
+
+    dom_xmin = min(lis_char[0]+lis_char[1])*0.95
+    dom_xmax = max(lis_char[0]+lis_char[1])*1.05 
+
+    base = alt.Chart(lis_char02_df).encode(
+            x=alt.X('Precio:Q', axis=alt.Axis(grid=True),title='Precios')
+            .scale(domain=[dom_xmin, dom_xmax]),                                                                      
+             y=alt.Y('cat:N', axis=None))    
+
+    circles = base.mark_circle(size=60).encode(color=clrs_data)
+
+    chart_prxs = (circles).properties(height=50)
+
+    st.altair_chart(chart_prxs, width="stretch")
+
 Unitfixer = {'[m]':'m','mts':'m','MTS.':'m','ml.':'m','ml':'m','ML':'m',
              'm²':'m2','m³':'m3',
              'u':'un','uni':'un','ud.':'un','UN':'un','un.':'un','n°':'un','nº':'un','N°':'un','Nº':'un','unidad':'un',
@@ -76,7 +104,7 @@ Unitfixer = {'[m]':'m','mts':'m','MTS.':'m','ml.':'m','ml':'m','ML':'m',
 #--------------------------------------------
 
 def submit_data(entry01):
-    global items_user, Disp00, Disp00a, Disp01, MDisp01, MDisp03, MDisp04, price001, chart01
+    #global items_user, Disp00, Disp00a, Disp01, MDisp01, MDisp03, MDisp04, price001, chart01
     datos_ok = False
     MDisp01, MDisp03, MDisp04 = [], [], []
     entry_user = entry01    # Get the text entered; expected style: ' moldaje losa,  m2; caucho,m2 '
@@ -92,7 +120,7 @@ def submit_data(entry01):
         elif len(x) == 1:
             con1 += 1
     if len(items_user) == con2 or len(items_user) == con1:
-        st.write(f"Buscar: {items_user}")
+        #st.write(f"Buscar: {items_user}")
         datos_ok = True
     else:
         st.write('datos mal ingresados')
@@ -150,7 +178,7 @@ def submit_data(entry01):
                     Res10.append(pr_row)
 
             #merging meth00 and meth01:
-            st.write(f"meth00: {len(Res00)}, meth10: {len(Res10)}") #debug
+            #st.write(f"meth00: {len(Res00)}, meth10: {len(Res10)}") #debug
             Res_raw_full = list(set(Res00 + Res10))  #all info, deleting repetead items
             Res_raw = [(x[0],x[1],x[5],x[8],x[6]) for x in Res_raw_full]
                     # (item descr, un, fecha, precio1, obra)
@@ -228,7 +256,6 @@ def submit_data(entry01):
 def prices_data():
     if "MDisp01" in st.session_state:
         MDisp01_A = st.session_state.MDisp01    
-##    if len(MDisp01) > 0:
         MDisp01_Adf = pd.DataFrame(MDisp01_A)#,columns=['Sector','Performance'])
         st.dataframe(MDisp01_Adf, width="content", hide_index=True,
                      column_config={"0":'Item',"1":'Un',"2":'Fecha',"3":'Precio',"4":'Obra'})
@@ -272,6 +299,7 @@ st.subheader("PU datos", divider="red")
 entry01 = st.text_input("Ingresar item(s):", width=500)
 if st.button("Aceptar"):
     submit_data(entry01)
+st.divider()    
 if st.button("Ver precios (todos)"):
     prices_data()
 if st.button("Ver precio promedio"):
