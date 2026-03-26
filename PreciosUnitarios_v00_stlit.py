@@ -43,7 +43,8 @@ def aver_chart(item00, pr_aver, lis_char):    # ( item name, average pre-calcula
     #st chart:    
     lis_char02 = [(x,'nums') for x in lis_char[1]]  #nums para promediar
     for y in lis_char[0]:
-        lis_char02.append((y,'extr')) #nums extremos
+        if y != 0:
+            lis_char02.append((y,'extr')) #nums extremos
     lis_char02.append((pr_aver,'prom')) #num promedio
         
     lis_char02_df = pd.DataFrame(lis_char02,columns=['Precio','cat'])
@@ -78,7 +79,6 @@ Unitfixer = {'[m]':'m','mts':'m','MTS.':'m','ml.':'m','ml':'m','ML':'m',
 #--------------------------------------------
 
 def submit_data(entry01):
-    #global items_user, Disp00, Disp00a, Disp01, MDisp01, MDisp03, MDisp04, price001, chart01
     datos_ok = False
     MDisp01, MDisp03, MDisp04 = [], [], []
     entry_user = entry01    # Get the text entered; expected style: ' moldaje losa,  m2; caucho,m2 '
@@ -94,7 +94,6 @@ def submit_data(entry01):
         elif len(x) == 1:
             con1 += 1
     if len(items_user) == con2 or len(items_user) == con1:  #everyone must be the same type
-        #st.write(f"Buscar: {items_user}")
         datos_ok = True
     else:
         st.write('datos mal ingresados')
@@ -163,14 +162,9 @@ def submit_data(entry01):
                     continue
 
             #merging meth00 and meth01:
-            #st.write(f"meth00: {len(Res00)}, meth10: {len(Res10)}") #debug
             Res_raw_full = list(set(Res00 + Res10))  #all info, deleting repetead items
             Res_raw = [(x[0],x[1],x[5],x[8],x[6]) for x in Res_raw_full]
                     # (item descr, un, fecha, precio1, obra)
-                    ##pr_row = (row[1], row[2].lower(),  row[6], ref_price, row[7]) 
-
-#            for x in Res_raw_full:
-#                MDisp04.append((x[0],x[1],x[2],x[3],x[4],x[5],x[8],x[6],x[7]))  #obs: little change for price column
   
             #for developing:    ------------------------\/
             Prices_now = [int(ro[3]) for ro in Res_raw]
@@ -267,7 +261,6 @@ def prices_aver():
             items_user_A = st.session_state.items_user
         if "chart01" in st.session_state:
             chart01_A = st.session_state.chart01
-##            st.write(f"chart01_A: {chart01_A}") #debug
         if "price001" in st.session_state:
             price001_A = st.session_state.price001
 
