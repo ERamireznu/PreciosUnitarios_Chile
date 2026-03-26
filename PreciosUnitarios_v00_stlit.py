@@ -5,7 +5,6 @@ ti0 = time.time()
 ##from datetime import datetime
 import pandas as pd
 import numpy as np
-#import matplotlib.pyplot as plt
 import altair as alt
 #---------------------------------------------------------
 import __Remodelaciones as Remo
@@ -18,7 +17,7 @@ import AllFuncs_PU as Alf
 import valor_uf_PU as v_uf
 #---------------------------------------------------------
 
-def dcomplist(st0): # (str phrase)--> ['str0','str1',...'strn']
+def dcomplist(st0): # (str phrase)--> ['str0','str1',...'strn']-->return: [strs ordered, major to minor]
     lis2 = [(x, len(x)) for x in st0.split()]
     lis3 = sorted(lis2, key = lambda x:x[1], reverse=True)
     return [x[0] for x in lis3]    
@@ -37,35 +36,10 @@ def aver_tail(list_nums, perc=0.7):  #(list with numbers to calc average; perc: 
         lis_chart = [list_nums[:tail]+list_nums[-tail:],list_nums[tail:-tail]]
         return int(np.average(list_nums[tail:-tail])), lis_chart
     else:
-        return int(np.average(list_nums)), [list_nums]  #last: for simplifying      
-
+        lis_chart = [[0 for x in list_nums], list_nums]  #last: only for simplifying       
+        return int(np.average(list_nums)), lis_chart
+    
 def aver_chart(item00, pr_aver, lis_char):    # ( item name, average pre-calculated, list:[[extreme numbers],[averaging numbers]] or [[averaging numbers]] )
-    #fig, ax = plt.subplots(figsize=(5, 1.7))
-    #horizontal:
-    #plt.axhline(0, color="lightgrey", linewidth=0.6, zorder=0)
-    #promedio:
-    #plt.scatter(pr_aver, 0, s=100, color="limegreen", zorder=3, marker='|', label = 'promedio')
-
-    #if len(lis_char)==2:  #[[],[]]
-        #precios para promedio:
-        #plt.scatter(lis_char[1], [0]*len(lis_char[1]), s=10, color="mediumslateblue", zorder=3)
-        #extremos no considerados:
-        #plt.scatter(lis_char[0], [0]*len(lis_char[0]), color="red", s=10, label="no incluidos", zorder=3)
-
-    #elif len(lis_char)==1:  #[[]]
-        #precios para promedio:
-        #plt.scatter(lis_char[0], [0]*len(lis_char[0]), s=10, color="mediumslateblue", zorder=3)    
-
-    # Hide y-axis
-    #plt.yticks([])
-    #plt.xticks(fontsize=7)
-    #plt.title(f"Precios: {item00}", loc='left', fontsize=9)
-    # Adjust plot area: (left, bottom, right, top)
-    #plt.subplots_adjust(left=0.1, right=0.95, top=0.8, bottom=0.3)
-    #plt.legend(fontsize=6)
-
-    #st.pyplot(fig, use_container_width=False)
-
     #st chart:    
     lis_char02 = [(x,'nums') for x in lis_char[1]]  #nums para promediar
     for y in lis_char[0]:
@@ -78,7 +52,7 @@ def aver_chart(item00, pr_aver, lis_char):    # ( item name, average pre-calcula
         .then(alt.value('#afd1e7'))      
         .when(alt.datum.cat == 'extr')
         .then(alt.value('#fc9e80'))     
-        .otherwise(alt.value('green')))
+        .otherwise(alt.value('forestgreen')))
 
     dom_xmin = min(lis_char[0]+lis_char[1])*0.95
     dom_xmax = max(lis_char[0]+lis_char[1])*1.05 
@@ -97,10 +71,10 @@ def aver_chart(item00, pr_aver, lis_char):    # ( item name, average pre-calcula
 Unitfixer = {'[m]':'m','mts':'m','MTS.':'m','ml.':'m','ml':'m','ML':'m',
              'm²':'m2','m³':'m3',
              'u':'un','uni':'un','ud.':'un','UN':'un','un.':'un','n°':'un','nº':'un','N°':'un','Nº':'un','unidad':'un',
-             'und':'un','unid':'un','c/u':'un',
+             'und':'un','unid':'un','c/u':'un','unidades':'un',
              'Gl':'gl','Gl.':'gl','gl.':'gl',
              'día':'dia',
-             'Mes':'mes','Meses':'mes','MES':'mes'}
+             'Mes':'mes','Meses':'mes','MES':'mes','meses':'mes'}
 #--------------------------------------------
 
 def submit_data(entry01):
@@ -119,7 +93,7 @@ def submit_data(entry01):
             con2 += 1
         elif len(x) == 1:
             con1 += 1
-    if len(items_user) == con2 or len(items_user) == con1:
+    if len(items_user) == con2 or len(items_user) == con1:  #everyone must be the same type
         #st.write(f"Buscar: {items_user}")
         datos_ok = True
     else:
@@ -138,7 +112,7 @@ def submit_data(entry01):
         for item in input_items:
             Res00, Res10 = [], []
             No_unit = False
-            lis00 = [item[0]]#+' ',' '+item, ' '+item+' ']
+            lis00 = [item[0]]
             lis10 = dcomplist(item[0])
 
             #meth00(item) search exact description:
@@ -147,13 +121,18 @@ def submit_data(entry01):
                 for row in Rows_all:
                     row1_temp = Alf.remove_accents(row[1])
                     if a01 in row1_temp:
-                        ref_price = round(v_uf.uf_factor(row[6])*int(row[4]))
-                        row2fix = (row[2].lower()).replace(' ','')   #lower and deleting spaces
-                        if row2fix in Unitfixer:
-                            row[2] = Unitfixer[row2fix]                
-                        pr_row = (row[1],row[2].lower(),int(row[3]),int(row[4]),int(row[5]),row[6],row[7],row[8],ref_price)
-                        #   (item descr,  un,            cant,  precio0,     prtotal_0,   fecha, obra,  constru, precio1)               
-                        Res00.append(pr_row)
+                        try:
+                            ref_price = round(v_uf.uf_factor(row[6])*int(row[4]))
+                            row2fix = (row[2].lower()).replace(' ','')   #lower and deleting spaces
+                            if row2fix in Unitfixer:
+                                row[2] = Unitfixer[row2fix]
+                            else:
+                                row[2] = row2fix                
+                            pr_row = (row[1],row[2].lower(),int(row[3]),int(row[4]),int(row[5]),row[6],row[7],row[8],ref_price)
+                            #   (item descr,  un,            cant,  precio0,     prtotal_0,   fecha, obra,  constru, precio1)               
+                            Res00.append(pr_row)
+                        except:
+                            continue
 
             #meth10(item) search every word of description (no ordered):
             lis10 = [Alf.remove_accents(x) for x in lis10 if len(x)>2]  #(deleting short words, no search for them)
@@ -163,19 +142,25 @@ def submit_data(entry01):
             for row in Rows_all:
                 cont = 0
                 row1_temp = Alf.remove_accents(row[1])
-                for a10 in lis10:  #must be
-                    if a10 in row1_temp:
-                        cont += 1
-                for a11 in lis11:  #must not be
-                    if a11[2:] not in row1_temp:
-                        cont += 1    
-                if cont == len(lis10)+len(lis11):
-                    ref_price = round(v_uf.uf_factor(row[6])*int(row[4]))
-                    row2fix = (row[2].lower()).replace(' ','')   #lower and deleting spaces
-                    if row2fix in Unitfixer:
-                        row[2] = Unitfixer[row2fix]        
-                    pr_row = (row[1],row[2].lower(),int(row[3]),int(row[4]),int(row[5]),row[6],row[7],row[8],ref_price)
-                    Res10.append(pr_row)
+                try:
+                    for a10 in lis10:  #must be
+                        if a10 in row1_temp:
+                            cont += 1
+                    for a11 in lis11:  #must not be
+                        if a11[2:] not in row1_temp:
+                            cont += 1    
+                    if cont == len(lis10)+len(lis11):
+                        ref_price = round(v_uf.uf_factor(row[6])*int(row[4]))
+                        row2fix = (row[2].lower()).replace(' ','')   #lower and deleting spaces
+                        if row2fix in Unitfixer:
+                            row[2] = Unitfixer[row2fix]
+                        else:
+                            row[2] = row2fix
+
+                        pr_row = (row[1],row[2].lower(),int(row[3]),int(row[4]),int(row[5]),row[6],row[7],row[8],ref_price)
+                        Res10.append(pr_row)
+                except:
+                    continue
 
             #merging meth00 and meth01:
             #st.write(f"meth00: {len(Res00)}, meth10: {len(Res10)}") #debug
@@ -184,8 +169,8 @@ def submit_data(entry01):
                     # (item descr, un, fecha, precio1, obra)
                     ##pr_row = (row[1], row[2].lower(),  row[6], ref_price, row[7]) 
 
-            for x in Res_raw_full:
-                MDisp04.append((x[0],x[1],x[2],x[3],x[4],x[5],x[8],x[6],x[7]))  #obs: little change for price column
+#            for x in Res_raw_full:
+#                MDisp04.append((x[0],x[1],x[2],x[3],x[4],x[5],x[8],x[6],x[7]))  #obs: little change for price column
   
             #for developing:    ------------------------\/
             Prices_now = [int(ro[3]) for ro in Res_raw]
@@ -229,6 +214,12 @@ def submit_data(entry01):
             for row in Disp00b:
                 MDisp01.append(row)            
 
+            for y in MDisp01:                
+                for x in Res_raw_full:
+                    if y[0] == x[0]:
+                        MDisp04.append((x[0],x[1],x[2],x[3],x[4],x[5],x[8],x[6],x[7]))  #obs: little change for price column
+                        break
+            
             #meth20(item,un):
             if len(item) == 2:
                 if item[1] in Unitfixer:
@@ -238,10 +229,16 @@ def submit_data(entry01):
                 if len(Disp02)>0:
                     price001 = (aver_tail([x[3] for x in Disp02]))[0]
                     chart01 = (aver_tail([x[3] for x in Disp02]))[1]
+                    st.session_state.chart01 = chart01
                 else:
                     price001 = 'no data'
-                MDisp03.append((item[0], item[1], price001, len(Disp02)))
+                st.session_state.price001 = price001
+                MDisp03.append((a01.title(), item[1], price001, len(Disp02)))
+                un00 = item[1]
+            else:
+                un00 = ''
 
+            st.write(f"{a01.title()}, {un00} --> número de resultados: {len(Disp00b)}")
 
         if No_unit:
             MDisp01.insert(0,f"Unidad '{item[1]}' no existe. Disponibles:")
@@ -250,8 +247,6 @@ def submit_data(entry01):
         st.session_state.MDisp01 = MDisp01
         st.session_state.MDisp03 = MDisp03
         st.session_state.MDisp04 = MDisp04
-        st.session_state.chart01 = chart01
-        st.session_state.price001 = price001
         
 def prices_data():
     if "MDisp01" in st.session_state:
@@ -263,23 +258,28 @@ def prices_data():
         st.write('sin datos')
 def prices_aver():
     if "MDisp03" in st.session_state:
-        MDisp03_A = st.session_state.MDisp03    
+        chart01_A = ['']   #solo para evitar indefinicion  
+        MDisp03_A = st.session_state.MDisp03
         MDisp03_Adf = pd.DataFrame(MDisp03_A)#,columns=['Sector','Performance'])
-        st.dataframe(MDisp03_Adf, width="content", hide_index=True,
-                     column_config={"0":'Item',"1":'Un',"2":'Precio',"3":'#hits'})    
+
+        #special case: prices chart when only 1 (item, un) entered:
+        if "items_user" in st.session_state:
+            items_user_A = st.session_state.items_user
+        if "chart01" in st.session_state:
+            chart01_A = st.session_state.chart01
+##            st.write(f"chart01_A: {chart01_A}") #debug
+        if "price001" in st.session_state:
+            price001_A = st.session_state.price001
+
+        if len(items_user_A)==1 and len(items_user_A[0])==2 and (len(chart01_A)==2 or len(chart01_A[0])>=2):            
+            st.dataframe(MDisp03_Adf, width="content", hide_index=True,
+                     column_config={"0":'Item',"1":'Un',"2":'Precio',"3":'#hits'})
+            if len(chart01_A[1])>=2:    
+                aver_chart(items_user_A[0][0], price001_A, chart01_A)  #>=2 to get an average
+        else:
+            st.write('Sólo disponible para 1 item, con unidad.')
     else:
-        st.write('Unidad no señalada')
-        
-    #special case: prices chart when only 1 (item, un) entered:
-    if "items_user" in st.session_state:
-        items_user_A = st.session_state.items_user
-    if "chart01" in st.session_state:
-        chart01_A = st.session_state.chart01
-    if "price001" in st.session_state:
-        price001_A = st.session_state.price001
-    
-        if len(items_user_A)==1 and len(items_user_A[0])==2 and (len(chart01_A)==2 or len(chart01_A[0])>=2):
-            aver_chart(items_user_A[0][0], price001_A, chart01_A)
+        st.write('sin datos') 
 
 def prices_data_all():
     if "MDisp04" in st.session_state:
@@ -300,9 +300,19 @@ entry01 = st.text_input("Ingresar item(s):", width=500)
 if st.button("Aceptar"):
     submit_data(entry01)
 st.divider()    
-if st.button("Ver precios (todos)"):
-    prices_data()
-if st.button("Ver precio promedio"):
-    prices_aver()
-if st.button("Ver más información"):
-    prices_data_all()    
+if "MDisp01" in st.session_state:
+    MDisp01_00 = st.session_state.MDisp01
+    if len(MDisp01_00)>0:
+        if st.button("Ver precios (todos)"):
+            prices_data()
+if "MDisp03" in st.session_state:
+    MDisp03_00 = st.session_state.MDisp03
+    Uns03 = set([x[1] for x in MDisp03_00])  #extracting units
+    if len(MDisp03_00)>0 and len(Uns03)==1:
+        if st.button("Ver precio promedio"):
+            prices_aver()
+if "MDisp04" in st.session_state:
+    MDisp04_00 = st.session_state.MDisp04
+    if len(MDisp04_00)>0:
+        if st.button("Ver más información"):
+            prices_data_all() 
