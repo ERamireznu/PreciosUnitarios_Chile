@@ -4,11 +4,7 @@ mes_uf = {'jan 1990': 5435.28, 'feb 1990': 5543.8, 'mar 1990': 5672.79, 'apr 199
           'jan 2026': 39731.79, 'feb 2026': 39703.50, 'mar 2026': 39796.31, 'apr 2026': 39841.72}
 
 
-
 def uf_factor(fecha0, ahora='apr 2026'):
     return round(mes_uf[ahora]/mes_uf[fecha0], 4)
-
-
-
 
 
